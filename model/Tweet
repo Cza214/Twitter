@@ -1,0 +1,158 @@
+<?php
+
+class Tweet{
+    private $id;
+    private $user_id;
+    private $message;
+    private $creationDate;
+
+    public function __construct()
+    {
+        $this->id = -1;
+        $this->user_id = null;
+        $this->message = "";
+        $this->creationDate = "";
+
+    }
+    /**
+     * @return mixed
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUserId()
+    {
+        return $this->user_id;
+    }
+
+    /**
+     * @param mixed $user_id
+     */
+    public function setUserId($user_id)
+    {
+        $this->user_id = $user_id;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMessage()
+    {
+        return $this->message;
+    }
+
+    /**
+     * @param mixed $message
+     */
+    public function setMessage($message)
+    {
+        $this->message = $message;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCreationDate()
+    {
+        return $this->creationDate;
+    }
+
+    /**
+     * @param mixed $creationDate
+     */
+    public function setCreationDate($creationDate)
+    {
+        $this->creationDate = $creationDate;
+    }
+
+    public function saveToDB(PDO $conn)
+    {
+        $date = new \DateTime();
+        $date->setTimezone(new DateTimeZone('Europe/Warsaw'));
+        $date = $date->format('Y-m-d H:i:s');
+
+        if ($this->id === -1) {
+            $this->setCreationDate($date);
+            $stmt = $conn->prepare('INSERT INTO `message`(`user_id`,`text`,`creationDate`) VALUES (:user_id,:text,:creationDate)');
+            $result = $stmt->execute([
+                'user_id' => $this->getUserId(),
+                'text' => $this->getMessage(),
+                'creationDate' => $this->getCreationDate()
+
+            ]);
+            if ($result !== false) {
+                $this->id = $conn->lastInsertId();
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+    static public function loadTweetById(PDO $conn, $id){
+
+        $stmt = $conn->prepare('SELECT * FROM `message` WHERE id=:id');
+        $result = $stmt->execute([
+            'id' => $id
+        ]);
+        if($result === true && $stmt->rowCount() > 0){
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $tweet = new Tweet();
+            $tweet->id = $row['id'];
+            $tweet->setUserId($row['user_id']);
+            $tweet->setMessage($row['text']);
+            $tweet->setCreationDate($row['creationDate']);
+            return $tweet;
+        }
+        return NULL;
+    }
+
+    static public function loadAllTweetsByUserId(PDO $conn, $user_id){
+        $stmt = $conn->prepare('SELECT * FROM `message` WHERE user_id=:user_id');
+        $result = $stmt->execute([ 'user_id' => $user_id]);
+        $tab = [];
+        if($result !== false && $stmt->rowCount() > 0){
+            foreach ($stmt->fetchAll() as $key){
+                $tweet = new Tweet();
+                $tweet->id = $key['id'];
+                $tweet->setUserId($key['user_id']);
+                $tweet->setMessage($key['text']);
+                $tweet->setCreationDate($key['creationDate']);
+                $tab[] = $tweet;
+            }
+            return $tab;
+        }
+        return $tab;
+    }
+
+    static public function loadAllTweets(PDO $conn){
+        $result = $conn->query('SELECT * FROM `message` ORDER BY `creationDate` DESC');
+        $tab = [];
+        if($result !== false && $result->rowCount() > 0){
+            foreach ($result->fetchAll() as $key){
+                $tweet = new Tweet();
+                $tweet->id = $key['id'];
+                $tweet->user_id = $key['user_id'];
+                $tweet->setMessage($key['text']);
+                $tweet->setCreationDate($key['creationDate']);
+                $tab[] = $tweet;
+            }
+            return $tab;
+        }
+        return $tab;
+    }
+
+    public function toArray(){
+        return [
+            'id' => $this->getId(),
+            'user_id' => $this->getUserId(),
+            'text' => $this->getMessage(),
+            'creationDate' => $this->getCreationDate()
+        ];
+    }
+
+}
