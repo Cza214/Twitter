@@ -2,8 +2,8 @@
 
 **.config** -> should be in main folder.
 
-base=yourDB
-host=yourHOST
-pass=yourPASS
-user=yourUSER
+base=yourDB<br>
+host=yourHOST<br>
+pass=yourPASS<br>
+user=yourUSER<br>
 
