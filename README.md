@@ -7,6 +7,7 @@ Simple application with the possibility of adding new Tweets and comment it. Sen
 
 
 ----------------- Other -----------------------
+
 **.config** -> should be in main folder.
 
 base=yourDB<br>
